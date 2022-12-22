@@ -1,2 +1,2 @@
 # PythonToolForExcel
-Private tool for my girl 's work
+Private tool for EXCEL
