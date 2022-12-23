@@ -127,6 +127,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.pushButton_4.clicked.connect(self.DeleteWhoIsLucky)
         self.pushButton_5.clicked.connect(self.savefile)
         self.pushButton_6.clicked.connect(self.AddWhoIsLucky)
+        self.pushButton_7.clicked.connect(self.BatchProcess)
         #init excel 
         self.excelmanage = ExcelManager()
         self.cwd = '.'
@@ -170,7 +171,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.textBrowser.setText("文件名："+filename)
                 self.setConsoleInfo("打开了文件"+filename)
                 self.cwd = fname[0]
-                self.excelmanage.SetIsOpen(True)
                 self.excelmanage.SetFilePath(fname)
                 self.excelmanage.SetFilename(filename)
                 ret = self.excelmanage.OpenFile()
@@ -226,6 +226,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.setTextInfo("----操作-查找-员工编号----")
             self.setTextInfo("sheet名称: " + self.infolist.sheetname)
             self.setTextInfo("员工编号: " + self.infolist.idlist)
+            self.infolist.idlist = self.infolist.idlist.split(' ')
             ret = self.excelmanage.GetEmployeeWithId(self.infolist.sheetname,self.infolist.idlist)
             if ret != 0:
                 QtWidgets.QMessageBox.warning(self, "错误", "处理发生错误", QtWidgets.QMessageBox.Ok)
@@ -264,6 +265,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.setTextInfo("员工编号: " + self.infolist.idlist)
             self.setTextInfo("月份：" + self.infolist.month)
             self.setTextInfo("项目编号：" + self.infolist.projectid)
+            self.infolist.idlist = self.infolist.idlist.split(' ')
             ret = self.excelmanage.DeleteWhoIstheLucky(self.infolist.sheetname,self.infolist.idlist,
                                                     self.infolist.month,self.infolist.projectid)
             if ret != 0:
@@ -306,6 +308,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.setTextInfo("员工编号: " + self.infolist.idlist)
             self.setTextInfo("月份：" + self.infolist.month)
             self.setTextInfo("项目编号：" + self.infolist.projectid)
+            self.infolist.idlist = self.infolist.idlist.split(' ')
             ret = self.excelmanage.AddWhoIstheLucky(self.infolist.sheetname,self.infolist.idlist,
                                                     self.infolist.month,self.infolist.projectid)
             if ret != 0:
@@ -327,7 +330,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             return
         if fname[0]:
             path = pathlib.Path(fname[0])
-            file = open(fname[0],"r")
+            file = open(fname[0],encoding='utf-8')
             filename = path.name
             if filename != "":
                 if self.excelmanage.IsBusy:
@@ -338,14 +341,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.setConsoleInfo("打开了批处理配置文件"+filename)
                 self.setConsoleInfo("正在进行批处理: ")
                 for line in file.readlines():
+                    print(line)
                     list = line.split(' ')
                     operation = list[0] #operation "Add  Del"
                     list.remove(operation)
-                    sheetname = list[1] #sheet
+                    sheetname = list[0] #sheet
                     list.remove(sheetname)
-                    month = list[2] #month
+                    month = list[0] #month
                     list.remove(month)
-                    projectid = list[3] #project id
+                    projectid = list[0] #project id
                     list.remove(projectid)
                     listid = list
                     ret = 0
@@ -382,8 +386,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         self.listdeleted.append(str(month+projectid))
                     else:
                         QtWidgets.QMessageBox.warning(self, "错误", "operation错误", QtWidgets.QMessageBox.Ok)
+                        self.setConsoleInfo("处理失败")
                         return
-                
+        self.setConsoleInfo("处理成功")
         return 0
 
     def closeEvent(self,event):

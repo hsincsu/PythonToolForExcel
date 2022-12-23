@@ -63,7 +63,7 @@ class ExcelManager(object):
         
 
     def OpenFile(self):
-        if not self._IsOpen:
+        if self._IsOpen:
             return -1 #means error.
         else:
             self.app = xw.App(visible=False,add_book=False)
@@ -74,6 +74,7 @@ class ExcelManager(object):
                 self.sheet_len = len(self.wb.sheets)
                 for i in range(self.sheet_len):
                     self.sheetarr[self.wb.sheets[i].name] = SheetManager(self.wb,self.wb.sheets[i].name,i)
+                self._IsOpen = True
                 return 0
             else:
                 return -2
@@ -112,7 +113,7 @@ class ExcelManager(object):
         if not self._IsOpen:
             return -1
         
-        listid = idlist.split(' ')
+        listid = idlist
         #get sheets
         sheet = self.wb.sheets[sheetname]
         sheetmanager = self.sheetarr[sheetname]
@@ -148,7 +149,7 @@ class ExcelManager(object):
         if not self._IsOpen:
             return -1
         
-        listid = idlist.split(' ')
+        listid = idlist
         #get sheets
         sheet = self.wb.sheets[sheetname]
         sheetmanager = self.sheetarr[sheetname]
@@ -351,7 +352,7 @@ class ExcelManager(object):
         if not self._IsOpen:
             return -1
         
-        listid = idlist.split(' ')
+        listid = idlist
         #get sheets
         sheet = self.wb.sheets[sheetname]
         sheetmanager = self.sheetarr[sheetname]
