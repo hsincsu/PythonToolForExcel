@@ -226,6 +226,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.setTextInfo("----操作-查找-员工编号----")
             self.setTextInfo("sheet名称: " + self.infolist.sheetname)
             self.setTextInfo("员工编号: " + self.infolist.idlist)
+            QtWidgets.QApplication.processEvents()
             self.infolist.idlist = self.infolist.idlist.split(' ')
             ret = self.excelmanage.GetEmployeeWithId(self.infolist.sheetname,self.infolist.idlist)
             if ret != 0:
@@ -265,6 +266,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.setTextInfo("员工编号: " + self.infolist.idlist)
             self.setTextInfo("月份：" + self.infolist.month)
             self.setTextInfo("项目编号：" + self.infolist.projectid)
+            QtWidgets.QApplication.processEvents()
             self.infolist.idlist = self.infolist.idlist.split(' ')
             ret = self.excelmanage.DeleteWhoIstheLucky(self.infolist.sheetname,self.infolist.idlist,
                                                     self.infolist.month,self.infolist.projectid)
@@ -308,6 +310,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.setTextInfo("员工编号: " + self.infolist.idlist)
             self.setTextInfo("月份：" + self.infolist.month)
             self.setTextInfo("项目编号：" + self.infolist.projectid)
+            QtWidgets.QApplication.processEvents()
             self.infolist.idlist = self.infolist.idlist.split(' ')
             ret = self.excelmanage.AddWhoIstheLucky(self.infolist.sheetname,self.infolist.idlist,
                                                     self.infolist.month,self.infolist.projectid)
@@ -339,23 +342,30 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.excelmanage.IsBusy=True
                 self.textBrowser.setText("文件名："+filename)
                 self.setConsoleInfo("打开了批处理配置文件"+filename)
-                self.setConsoleInfo("正在进行批处理: ")
+                self.setConsoleInfo("正在进行批处理: \n")
+                QtWidgets.QApplication.processEvents()
                 for line in file.readlines():
-                    print(line)
-                    list = line.split(' ')
+                    list = line.strip().split(' ')
                     operation = list[0] #operation "Add  Del"
+                    self.setConsoleInfo("opeartion: " + operation)
                     list.remove(operation)
                     sheetname = list[0] #sheet
+                    self.setConsoleInfo("sheetname: " + sheetname)
                     list.remove(sheetname)
                     month = list[0] #month
+                    self.setConsoleInfo("month: " + month)
                     list.remove(month)
                     projectid = list[0] #project id
+                    self.setConsoleInfo("projectid: " + projectid)
                     list.remove(projectid)
                     listid = list
+                    self.setConsoleInfo("listid: ")
+                    self.setConsoleInfo(str(listid))
+                    QtWidgets.QApplication.processEvents()
                     ret = 0
                     if operation == 'Add':
                         for added in self.listadded:
-                            if added == str(self.infolist.month+self.infolist.projectid):
+                            if added == str(month+projectid):
                                 QtWidgets.QMessageBox.warning(self, "警告", added+":已处理", QtWidgets.QMessageBox.Ok)
                                 ret = -1
                                 break
@@ -364,7 +374,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         ret = self.excelmanage.AddWhoIstheLucky(sheetname,listid,month,projectid)
                     elif operation == 'Del':
                         for deleted in self.listdeleted:
-                            if deleted == str(self.infolist.month+self.infolist.projectid):
+                            if deleted == str(month+projectid):
                                 QtWidgets.QMessageBox.warning(self, "警告", deleted+":已处理", QtWidgets.QMessageBox.Ok)
                                 ret = -1
                                 break
@@ -376,7 +386,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
                     if ret != 0:
                         QtWidgets.QMessageBox.warning(self, "错误", "处理发生错误", QtWidgets.QMessageBox.Ok)
-                        self.infolist = None
                         self.excelmanage.IsBusy=False
                         return 
                     
@@ -387,8 +396,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     else:
                         QtWidgets.QMessageBox.warning(self, "错误", "operation错误", QtWidgets.QMessageBox.Ok)
                         self.setConsoleInfo("处理失败")
+                        self.excelmanage.IsBusy=False
                         return
         self.setConsoleInfo("处理成功")
+        QtWidgets.QApplication.processEvents()
         return 0
 
     def closeEvent(self,event):

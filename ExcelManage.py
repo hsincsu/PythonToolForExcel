@@ -3,6 +3,7 @@ import os
 import numpy as np
 import xlwings as xw
 import time
+from decimal import *
 
 class SheetManager(object):
     def __init__(self,wb,name,index):
@@ -46,7 +47,7 @@ class SheetManager(object):
         for i in list_rows:
             if valuelist[i-1] == value:
                 list_work.append(i)
-        print(len(list_work))
+        print("rows:",len(list_work))
         return list_work
 
 
@@ -158,185 +159,58 @@ class ExcelManager(object):
             sheetmanager.init_sheet(sheet,4) #actually should can be written by user.but I am lazy.
 
         #get month list
-        # print("start get monthlist")
         projectlist = sheetmanager.get_range_rows_add_list(projectid,2) #projectid is 2
         worklist = sheetmanager.get_range_rows_del_list(month,1,projectlist)
         
-        FromBeforeMoney = 0
-        FromShebao = 0
-        FromGongJiJin = 0
-        ToBeforeMoney = 0
-        ToShebao = 0
-        ToGongJiJin = 0
         droplistid = []
-        #get money 
+        #del what we want
         for workid in listid:
             for id in worklist:
                 if sheet.range((id,4)).value == workid:
-                    listvalue1 = sheet.range((id,6),(id,8)).value
-                    listvalue2 = sheet.range((id,10),(id,12)).value
-                    TmpFromBeforeMoney = float(listvalue1[0])
-                    TmpFromShebao = float(listvalue1[1])
-                    TmpFromGongJiJin = float(listvalue1[2])
-                    TmpToBeforeMoney = float(listvalue2[0])
-                    TmpToShebao = float(listvalue2[1])
-                    TmpToGongJiJin = float(listvalue2[2])
-                    if listvalue1[0] is not None and listvalue1[0] != 0:
-                        FromBeforeMoney = FromBeforeMoney + listvalue1[0]
-                    if listvalue1[1] is not None and listvalue1[1] != 0:
-                        FromShebao = FromShebao + listvalue1[1]
-                    if listvalue1[2] is not None and listvalue1[2] != 0:
-                        FromGongJiJin = FromGongJiJin + listvalue1[2]
-                    if listvalue2[0] is not None and listvalue2[0] != 0:
-                        ToBeforeMoney = ToBeforeMoney + listvalue2[0]
-                    if listvalue2[1] is not None and listvalue2[1] != 0:
-                        ToShebao = ToShebao + listvalue2[1]
-                    if listvalue2[2] is not None and listvalue2[2] != 0:
-                        ToGongJiJin = ToGongJiJin + listvalue2[2]
                     droplistid.append(id)
                     break
-        for id in droplistid:
-            worklist.remove(id)
     
-        # print(len(worklist))
-        # print(FromBeforeMoney,FromShebao,FromGongJiJin,ToBeforeMoney,ToShebao,ToGongJiJin)
         #add money to everyone who is lucky
-        AllFromBeforeMoney = 0.00
-        AllFromShebao = 0.00
-        AllFromGongJiJin = 0.00
-        AllToBeforeMoney = 0.00
-        AllToShebao = 0.00
-        AllToGongJiJin = 0.00
-        ratioFromBeforeMoney = {}
-        ratioFromShebao = {}
-        ratioFromGongJiJin = {}
-        ratioToBeforeMoney = {}
-        ratioToShebao = {}
-        ratioToGongJiJin = {}
+        AllMoneyBefore = 0.00
+        AllMoneyAfter = 0.00
         droplist = []
         #1.get all sum
     
         for id in worklist:
             if float(sheet.range((id,14)).value) != 1:
-                listvalue1 = sheet.range((id,6),(id,8)).value
-                listvalue2 = sheet.range((id,10),(id,12)).value
-                TmpFromBeforeMoney = float(listvalue1[0])
-                TmpFromShebao = float(listvalue1[1])
-                TmpFromGongJiJin = float(listvalue1[2])
-                TmpToBeforeMoney = float(listvalue2[0])
-                TmpToShebao = float(listvalue2[1])
-                TmpToGongJiJin = float(listvalue2[2])
-
-                if TmpFromBeforeMoney is not None and TmpFromBeforeMoney != 0:
-                    AllFromBeforeMoney = AllFromBeforeMoney + TmpFromBeforeMoney
-                if TmpFromShebao is not None and TmpFromShebao != 0:
-                    AllFromShebao = AllFromShebao + TmpFromShebao
-                if TmpFromGongJiJin is not None and TmpFromGongJiJin != 0:
-                    AllFromGongJiJin = AllFromGongJiJin + TmpFromGongJiJin
-                if TmpToBeforeMoney is not None and TmpToBeforeMoney != 0:
-                    AllToBeforeMoney = AllToBeforeMoney + TmpToBeforeMoney
-                if TmpToShebao is not None and TmpToShebao != 0:
-                    AllToShebao = AllToShebao + TmpToShebao
-                if TmpToGongJiJin is not None and TmpToGongJiJin != 0:
-                    AllToGongJiJin = AllToGongJiJin + TmpToGongJiJin
-                
+                AllMoneyBefore = AllMoneyBefore + sheet.range((id,9)).value
+                AllMoneyAfter = AllMoneyAfter + sheet.range((id,13)).value   
             else:
                 droplist.append(id)
         
         for id in droplist:
             worklist.remove(id)
+        
+        for id in droplistid:
+            worklist.remove(id)
+            AllMoneyBefore = AllMoneyBefore - sheet.range(id,9).value
 
         # print(len(worklist))
-        AllFromBeforeMoney = round(AllFromBeforeMoney,2)
-        AllFromShebao = round(AllFromShebao,2)
-        AllFromGongJiJin = round(AllFromGongJiJin,2)
-        AllToBeforeMoney = round(AllToBeforeMoney,2)
-        AllToShebao = round(AllToShebao,2)
-        AllToGongJiJin = round(AllToGongJiJin,2)
+        AllMoneyBefore = round(AllMoneyBefore,2)
+        AllMoneyAfter = round(AllMoneyAfter,2)
+        getcontext().prec = 8
+        ratio = Decimal(str(AllMoneyAfter)) / Decimal(str(AllMoneyBefore))
+        ratio = float(ratio)
+        print(AllMoneyAfter , AllMoneyBefore)
+        print(ratio)
 
-        TmpFromBeforeMoney = 0
-        TmpFromShebao = 0
-        TmpFromGongJiJin = 0
-        TmpToBeforeMoney = 0
-        TmpToShebao = 0
-        TmpToGongJiJin = 0
-        sum1 = 0
-        sum2 = 0
-        sum3 = 0
-        sum4 = 0
-        sum5 = 0
-        sum6 = 0
-        
         for id in worklist:
             
             listvalue1 = sheet.range((id,6),(id,8)).value
             listvalue2 = sheet.range((id,10),(id,12)).value
-            TmpFromBeforeMoney = float(listvalue1[0])
-            TmpFromShebao = float(listvalue1[1])
-            TmpFromGongJiJin = float(listvalue1[2])
-            TmpToBeforeMoney = float(listvalue2[0])
-            TmpToShebao = float(listvalue2[1])
-            TmpToGongJiJin = float(listvalue2[2])
             
-            if id == worklist[-1]:
-                listvalue1[0] = TmpFromBeforeMoney + FromBeforeMoney - sum1
-                listvalue1[1] = TmpFromShebao + FromShebao - sum2
-                listvalue1[2] = TmpFromGongJiJin + FromGongJiJin - sum3
-                listvalue2[0] = TmpToBeforeMoney + ToBeforeMoney - sum4
-                listvalue2[1] = TmpToShebao + ToShebao - sum5
-                listvalue2[2] = TmpToGongJiJin + ToGongJiJin - sum6
-            else:
-                if TmpFromBeforeMoney is not None and TmpFromBeforeMoney != 0:
-                    ratioFromBeforeMoney[id] = abs(TmpFromBeforeMoney / AllFromBeforeMoney)
-                else:
-                    ratioFromBeforeMoney[id] = 0.00
-                if TmpFromShebao is not None and TmpFromShebao != 0:
-                    ratioFromShebao[id] = abs(TmpFromShebao / AllFromShebao)
-                else:
-                    ratioFromShebao[id] = 0.00
-                if TmpFromGongJiJin is not None and TmpFromGongJiJin != 0:
-                    ratioFromGongJiJin[id] = abs(TmpFromGongJiJin / AllFromGongJiJin)
-                else:
-                    ratioFromGongJiJin[id] = 0.00
-                if TmpToBeforeMoney is not None and TmpToBeforeMoney != 0:
-                    ratioToBeforeMoney[id] = abs(TmpToBeforeMoney / AllToBeforeMoney)
-                else:
-                    ratioToBeforeMoney[id] = 0.00
-                if TmpToShebao is not None and TmpToShebao != 0:
-                    ratioToShebao[id] = abs(TmpToShebao / AllToShebao)
-                else:
-                    ratioToShebao[id] = 0.00
-                if TmpToGongJiJin is not None and TmpToGongJiJin != 0:
-                    ratioToGongJiJin[id] = abs(TmpToGongJiJin / AllToGongJiJin)
-                else:
-                    ratioToGongJiJin[id] = 0.00
-                
-                tmpvalue1 = round(ratioFromBeforeMoney[id] * FromBeforeMoney,2)
-                listvalue1[0] = TmpFromBeforeMoney + tmpvalue1
-                sum1 = sum1 + tmpvalue1
-                tmpvalue2 = round(ratioFromShebao[id] * FromShebao,2)
-                listvalue1[1] = TmpFromShebao + tmpvalue2
-                sum2 = sum2 + tmpvalue2
-                tmpvalue3 = round(ratioFromGongJiJin[id] * FromGongJiJin,2)
-                listvalue1[2] = TmpFromGongJiJin + tmpvalue3
-                sum3 = sum3 + tmpvalue3
-                tmpvalue4 = round(ratioToBeforeMoney[id] * ToBeforeMoney,2)
-                listvalue2[0] = TmpToBeforeMoney + tmpvalue4
-                sum4 = sum4 + tmpvalue4
-                tmpvalue5 = round(ratioToShebao[id] * ToShebao,2)
-                listvalue2[1] = TmpToShebao + tmpvalue5
-                sum5 = sum5 + tmpvalue5
-                tmpvalue6 = round(ratioToGongJiJin[id] * ToGongJiJin,2)
-                listvalue2[2] = TmpToGongJiJin + tmpvalue6
-                sum6 = sum6 + tmpvalue6
+            listvalue2[0] = round(listvalue1[0] * ratio,2)
+            listvalue2[1] = round(listvalue1[1] * ratio,2)
+            listvalue2[2] = round(listvalue1[2] * ratio,2)
 
-            sheet.range((id,6),(id,8)).value = listvalue1
             sheet.range((id,10),(id,12)).value = listvalue2
 
-            # print(sheet.range((id,6)).value, sheet.range((id,7)).value,sheet.range((id,8)).value,
-            #         sheet.range((id,10)).value,sheet.range((id,11)).value,sheet.range((id,12)).value)
-
-        idlast = sheetmanager.nrows + 1 #make sure no one is bigger.
+        idlast = sheetmanager.nrows + 10 #make sure no one is bigger.
         for id in droplistid: #every delete make id changed , need caculate.
             if idlast < id : #impossible that there is situation that equal.
                 sheet.api.Rows(id - 1).Delete()
@@ -361,204 +235,56 @@ class ExcelManager(object):
             sheetmanager.init_sheet(sheet,4) #actually should can be written by user.but I am lazy.
 
         #get month list
-        # print("start get monthlist")
         projectlist = sheetmanager.get_range_rows_add_list(projectid,2) #projectid is 2
         worklist = sheetmanager.get_range_rows_del_list(month,1,projectlist)
         
-        FromBeforeMoney = 0
-        FromShebao = 0
-        FromGongJiJin = 0
-        ToBeforeMoney = 0
-        ToShebao = 0
-        ToGongJiJin = 0
         droplistid = []
-        TmpFromBeforeMoney = 0
-        TmpFromShebao = 0
-        TmpFromGongJiJin = 0
-        TmpToBeforeMoney = 0
-        TmpToShebao = 0
-        TmpToGongJiJin = 0
-        #get money 
+        #del what we want
         for workid in listid:
             for id in worklist:
                 if sheet.range((id,4)).value == workid:
-                    listvalue1 = sheet.range((id,6),(id,8)).value
-                    listvalue2 = sheet.range((id,10),(id,12)).value
-                    TmpFromBeforeMoney = float(listvalue1[0])
-                    TmpFromShebao = float(listvalue1[1])
-                    TmpFromGongJiJin = float(listvalue1[2])
-                    TmpToBeforeMoney = float(listvalue2[0])
-                    TmpToShebao = float(listvalue2[1])
-                    TmpToGongJiJin = float(listvalue2[2])
-                    if listvalue1[0] is not None and listvalue1[0] != 0:
-                        FromBeforeMoney = FromBeforeMoney + listvalue1[0]
-                    if listvalue1[1] is not None and listvalue1[1] != 0:
-                        FromShebao = FromShebao + listvalue1[1]
-                    if listvalue1[2] is not None and listvalue1[2] != 0:
-                        FromGongJiJin = FromGongJiJin + listvalue1[2]
-                    if listvalue2[0] is not None and listvalue2[0] != 0:
-                        ToBeforeMoney = ToBeforeMoney + listvalue2[0]
-                    if listvalue2[1] is not None and listvalue2[1] != 0:
-                        ToShebao = ToShebao + listvalue2[1]
-                    if listvalue2[2] is not None and listvalue2[2] != 0:
-                        ToGongJiJin = ToGongJiJin + listvalue2[2]
                     droplistid.append(id)
                     break
-        for id in droplistid:
-            worklist.remove(id)
     
-        # print(len(worklist))
-        # print(FromBeforeMoney,FromShebao,FromGongJiJin,ToBeforeMoney,ToShebao,ToGongJiJin)
         #add money to everyone who is lucky
-        AllFromBeforeMoney = 0.00
-        AllFromShebao = 0.00
-        AllFromGongJiJin = 0.00
-        AllToBeforeMoney = 0.00
-        AllToShebao = 0.00
-        AllToGongJiJin = 0.00
-        TmpFromBeforeMoney = 0
-        TmpFromShebao = 0
-        TmpFromGongJiJin = 0
-        TmpToBeforeMoney = 0
-        TmpToShebao = 0
-        TmpToGongJiJin = 0
-        ratioFromBeforeMoney = {}
-        ratioFromShebao = {}
-        ratioFromGongJiJin = {}
-        ratioToBeforeMoney = {}
-        ratioToShebao = {}
-        ratioToGongJiJin = {}
+        AllMoneyBefore = 0.00
+        AllMoneyAfter = 0.00
         droplist = []
         #1.get all sum
     
         for id in worklist:
             if float(sheet.range((id,14)).value) != 1:
-                listvalue1 = sheet.range((id,6),(id,8)).value
-                listvalue2 = sheet.range((id,10),(id,12)).value
-                TmpFromBeforeMoney = float(listvalue1[0])
-                TmpFromShebao = float(listvalue1[1])
-                TmpFromGongJiJin = float(listvalue1[2])
-                TmpToBeforeMoney = float(listvalue2[0])
-                TmpToShebao = float(listvalue2[1])
-                TmpToGongJiJin = float(listvalue2[2])
-
-                if TmpFromBeforeMoney is not None and TmpFromBeforeMoney != 0:
-                    AllFromBeforeMoney = AllFromBeforeMoney + TmpFromBeforeMoney
-                if TmpFromShebao is not None and TmpFromShebao != 0:
-                    AllFromShebao = AllFromShebao + TmpFromShebao
-                if TmpFromGongJiJin is not None and TmpFromGongJiJin != 0:
-                    AllFromGongJiJin = AllFromGongJiJin + TmpFromGongJiJin
-                if TmpToBeforeMoney is not None and TmpToBeforeMoney != 0:
-                    AllToBeforeMoney = AllToBeforeMoney + TmpToBeforeMoney
-                if TmpToShebao is not None and TmpToShebao != 0:
-                    AllToShebao = AllToShebao + TmpToShebao
-                if TmpToGongJiJin is not None and TmpToGongJiJin != 0:
-                    AllToGongJiJin = AllToGongJiJin + TmpToGongJiJin
-                
+                AllMoneyBefore = AllMoneyBefore + sheet.range((id,9)).value
+                AllMoneyAfter = AllMoneyAfter + sheet.range((id,13)).value   
             else:
                 droplist.append(id)
         
         for id in droplist:
             worklist.remove(id)
+        
+        for id in droplistid:
+            AllMoneyAfter = AllMoneyAfter - sheet.range(id,13).value
 
         # print(len(worklist))
-        AllFromBeforeMoney = round(AllFromBeforeMoney,2)
-        AllFromShebao = round(AllFromShebao,2)
-        AllFromGongJiJin = round(AllFromGongJiJin,2)
-        AllToBeforeMoney = round(AllToBeforeMoney,2)
-        AllToShebao = round(AllToShebao,2)
-        AllToGongJiJin = round(AllToGongJiJin,2)
-
-        TmpFromBeforeMoney = 0
-        TmpFromShebao = 0
-        TmpFromGongJiJin = 0
-        TmpToBeforeMoney = 0
-        TmpToShebao = 0
-        TmpToGongJiJin = 0
-        sum1 = 0
-        sum2 = 0
-        sum3 = 0
-        sum4 = 0
-        sum5 = 0
-        sum6 = 0
+        AllMoneyBefore = round(AllMoneyBefore,2)
+        AllMoneyAfter = round(AllMoneyAfter,2)
+        getcontext().prec = 8
+        ratio = Decimal(str(AllMoneyAfter)) / Decimal(str(AllMoneyBefore))
+        ratio = float(ratio)
+        print(AllMoneyAfter , AllMoneyBefore)
+        print(ratio)
         
         for id in worklist:
             
             listvalue1 = sheet.range((id,6),(id,8)).value
             listvalue2 = sheet.range((id,10),(id,12)).value
-            TmpFromBeforeMoney = float(listvalue1[0])
-            TmpFromShebao = float(listvalue1[1])
-            TmpFromGongJiJin = float(listvalue1[2])
-            TmpToBeforeMoney = float(listvalue2[0])
-            TmpToShebao = float(listvalue2[1])
-            TmpToGongJiJin = float(listvalue2[2])
             
-            if id == worklist[-1]:
-                listvalue1[0] = TmpFromBeforeMoney - FromBeforeMoney + sum1
-                listvalue1[1] = TmpFromShebao - FromShebao + sum2
-                listvalue1[2] = TmpFromGongJiJin - FromGongJiJin + sum3
-                listvalue2[0] = TmpToBeforeMoney - ToBeforeMoney + sum4
-                listvalue2[1] = TmpToShebao - ToShebao + sum5
-                listvalue2[2] = TmpToGongJiJin - ToGongJiJin + sum6
-            else:
-                if TmpFromBeforeMoney is not None and TmpFromBeforeMoney != 0:
-                    ratioFromBeforeMoney[id] = abs(TmpFromBeforeMoney / AllFromBeforeMoney)
-                else:
-                    ratioFromBeforeMoney[id] = 0.00
-                if TmpFromShebao is not None and TmpFromShebao != 0:
-                    ratioFromShebao[id] = abs(TmpFromShebao / AllFromShebao)
-                else:
-                    ratioFromShebao[id] = 0.00
-                if TmpFromGongJiJin is not None and TmpFromGongJiJin != 0:
-                    ratioFromGongJiJin[id] = abs(TmpFromGongJiJin / AllFromGongJiJin)
-                else:
-                    ratioFromGongJiJin[id] = 0.00
-                if TmpToBeforeMoney is not None and TmpToBeforeMoney != 0:
-                    ratioToBeforeMoney[id] = abs(TmpToBeforeMoney / AllToBeforeMoney)
-                else:
-                    ratioToBeforeMoney[id] = 0.00
-                if TmpToShebao is not None and TmpToShebao != 0:
-                    ratioToShebao[id] = abs(TmpToShebao / AllToShebao)
-                else:
-                    ratioToShebao[id] = 0.00
-                if TmpToGongJiJin is not None and TmpToGongJiJin != 0:
-                    ratioToGongJiJin[id] = abs(TmpToGongJiJin / AllToGongJiJin)
-                else:
-                    ratioToGongJiJin[id] = 0.00
-                
-                tmpvalue1 = round(ratioFromBeforeMoney[id] * FromBeforeMoney,2)
-                listvalue1[0] = TmpFromBeforeMoney - tmpvalue1
-                sum1 = sum1 + tmpvalue1
-                tmpvalue2 = round(ratioFromShebao[id] * FromShebao,2)
-                listvalue1[1] = TmpFromShebao - tmpvalue2
-                sum2 = sum2 + tmpvalue2
-                tmpvalue3 = round(ratioFromGongJiJin[id] * FromGongJiJin,2)
-                listvalue1[2] = TmpFromGongJiJin - tmpvalue3
-                sum3 = sum3 + tmpvalue3
-                tmpvalue4 = round(ratioToBeforeMoney[id] * ToBeforeMoney,2)
-                listvalue2[0] = TmpToBeforeMoney - tmpvalue4
-                sum4 = sum4 + tmpvalue4
-                tmpvalue5 = round(ratioToShebao[id] * ToShebao,2)
-                listvalue2[1] = TmpToShebao - tmpvalue5
-                sum5 = sum5 + tmpvalue5
-                tmpvalue6 = round(ratioToGongJiJin[id] * ToGongJiJin,2)
-                listvalue2[2] = TmpToGongJiJin - tmpvalue6
-                sum6 = sum6 + tmpvalue6
+            listvalue2[0] = round(listvalue1[0] * ratio,2)
+            listvalue2[1] = round(listvalue1[1] * ratio,2)
+            listvalue2[2] = round(listvalue1[2] * ratio,2)
 
-            sheet.range((id,6),(id,8)).value = listvalue1
+            print(listvalue2)
             sheet.range((id,10),(id,12)).value = listvalue2
-
-            # print(sheet.range((id,6)).value, sheet.range((id,7)).value,sheet.range((id,8)).value,
-            #         sheet.range((id,10)).value,sheet.range((id,11)).value,sheet.range((id,12)).value)
-
-        idlast = sheetmanager.nrows + 1 #make sure no one is bigger.
-        for id in droplistid: #every delete make id changed , need caculate.
-            if idlast < id : #impossible that there is situation that equal.
-                sheet.api.Rows(id - 1).Delete()
-            else:
-                sheet.api.Rows(id).Delete()
-            idlast = id
-            # print("deleted") 
         
         return 0
 
